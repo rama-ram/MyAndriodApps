@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Fluid Intake Tracker</string>
+
+    <string-array name="fluid">
+
+    </string-array>
+    <string name="button1">AddDrink</string>
+    <string name="button2">statistics</string>
+    <string name="button3">ManageUsers</string>
+    <string name="selectUser">User</string>
+    <string name="Total">Today\'sTotal</string>
+    <string name="Leftout">leftOut</string>
+    <string name="button4">Diary</string>
+    <string name="widgent1">Calendar</string>
+    <string name="Date1">Date</string>
+    <string name="title_activity_event_history">EventHistory</string>
+</resources>
