@@ -12,41 +12,37 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-
-import com.example.dbUtils.ManageFluidsDBManager;
-import com.example.dbUtils.FluidTrackerData;
-import com.example.common.FluidTrackerModel;
-import com.example.common.ListViewAdapter;
+import com.example.common.UserProfileData;
+import com.example.dbUtils.UserProfileDBManager;
+import com.example.common.ManageProfileAdapter;
+import com.example.models.ProfileModel;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.example.common.ManageProfileAdapter.FIRST_COLUMN;
+import static com.example.common.ManageProfileAdapter.SECOND_COLUMN;
 
-import static com.example.common.ListViewAdapter.FIRST_COLUMN;
-import static com.example.common.ListViewAdapter.SECOND_COLUMN;
-
-public class ManageFluid extends AppCompatActivity {
-
+public class ManageProfile extends AppCompatActivity {
 
     ListView listView;
 
-public static ManageFluidsDBManager dbManager;
-
+    public static UserProfileDBManager dbManager;
     static public ArrayList<HashMap<String, String>> list = new ArrayList<>();
-    ListViewAdapter ListViewAdapter;
+    com.example.common.ManageProfileAdapter ManageProfileAdapter;
 
     public void initiateDB(Context context){
-        dbManager =  new ManageFluidsDBManager(context);
+        dbManager =  new UserProfileDBManager(context);
         dbManager.open();
         System.out.println("connection opened");
-        }
-        public static List<HashMap<String, String>> loadDataSet(){
-            list.clear();
-        for (FluidTrackerModel f: FluidTrackerData.fluids) {
+    }
+    public static List<HashMap<String, String>> loadDataSet(){
+        list.clear();
+        for ( ProfileModel f: UserProfileData.profiles) {
             HashMap<String, String> hashmap = new HashMap<String, String>();
-            hashmap.put(FIRST_COLUMN, f.getFluidName());
-            hashmap.put(SECOND_COLUMN, String.valueOf(f.getTarget()));
+            hashmap.put(FIRST_COLUMN, f.getProfileName());
+            hashmap.put(SECOND_COLUMN, String.valueOf(f.getTotalDailyTarget()));
 
             list.add(hashmap);
         }
@@ -55,30 +51,30 @@ public static ManageFluidsDBManager dbManager;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.manage_fluid);
+        setContentView(R.layout.manage_profiles);
         initiateDB(this);
-        listView = (ListView) findViewById(R.id.listview);
-        FloatingActionButton addButton = (FloatingActionButton) findViewById(R.id.floatingActionButton);
+        listView = (ListView) findViewById(R.id.ProfileListview);
+        FloatingActionButton addButton = (FloatingActionButton) findViewById(R.id.floatingActionButtonProfile);
         addButton.setOnClickListener(new View.OnClickListener() {
                                          @Override
                                          public void onClick(View v) {
 
-                                             AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(ManageFluid.this);
+                                             AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(ManageProfile.this);
                                              final View view = getLayoutInflater().inflate(R.layout.manage_fluid_add_fluid_dialog, null);
-                                             dialogBuilder.setTitle("Add Fluid");
+                                             dialogBuilder.setTitle("Add Profile");
                                              dialogBuilder.setPositiveButton("Add", new DialogInterface.OnClickListener() {
                                                  @Override
                                                  public void onClick(DialogInterface dialog, int which) {
-                                                     FluidTrackerModel fluid = new FluidTrackerModel();
-                                                     TextView text1 = (TextView) view.findViewById(R.id.fluidName);
-                                                     fluid.setFluidName(text1.getText().toString());
-                                                     TextView text2= (TextView) view.findViewById(R.id.fluiddailytarget);
+                                                     ProfileModel profile= new ProfileModel();
+                                                     TextView text1 = (TextView) view.findViewById(R.id.profileName);
+                                                     profile.setProfileName(text1.getText().toString());
+                                                     TextView text2= (TextView) view.findViewById(R.id.profileDailyTarget);
                                                      int num = Integer.parseInt(text2.getText().toString());
-                                                     fluid.setTarget(num);
-                                                     dbManager.insertManageFluidsEntry(fluid);
-                                                     MainActivity.loadFluids(dbManager);
+                                                     profile.setTotalDailyTarget(num);
+                                                     dbManager.insertProfileEntry(profile);
+                                                     MainActivity.loadProfiles(ManageProfile.dbManager);
                                                      loadDataSet();
-                                                     ListViewAdapter.notifyDataSetChanged();
+                                                     ManageProfileAdapter.notifyDataSetChanged();
 
 
                                                  }
@@ -105,43 +101,41 @@ public static ManageFluidsDBManager dbManager;
 
 
 
-        MainActivity.loadFluids(dbManager);
+        MainActivity.loadFluids(ManageFluid.dbManager);
         loadDataSet();
-        ListViewAdapter = new ListViewAdapter(this, list);
+        ManageProfileAdapter = new ManageProfileAdapter(this, list);
         if (list.size()==0){
-        listView.setEmptyView(findViewById(R.id.emptyList));}
-        listView.setAdapter(ListViewAdapter);
+            listView.setEmptyView(findViewById(R.id.emptyList));}
+        listView.setAdapter(ManageProfileAdapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, final View view, final int position, long id) {
 
                 final HashMap<String,String> map = list.get(position);
                 AlertDialog.Builder builder = new AlertDialog.Builder(
-                        ManageFluid.this);
-                final FluidTrackerModel fluidOld = new FluidTrackerModel();
+                        ManageProfile.this);
+                final ProfileModel profileOld = new ProfileModel();
 
-                final View mview = getLayoutInflater().inflate(R.layout.manage_fluid_add_fluid_dialog,null);
-                final TextView text1 = (TextView) mview.findViewById(R.id.fluidName);
-                text1.setText(map.get("FluidName"));
+                final View mview = getLayoutInflater().inflate(R.layout.manage_profile_add_profile_dialog,null);
+                final TextView text1 = (TextView) mview.findViewById(R.id.addDialogProfileName);
+                text1.setText(map.get("ProfileName"));
 
-                final TextView text2 = (TextView) mview.findViewById(R.id.fluiddailytarget);
-                text2.setText(map.get("Target"));
-                fluidOld.setFluidName(map.get("FluidName"));
-                fluidOld.setTarget(Integer.parseInt(map.get("Target")));
-                builder.setTitle("Update Fluid");
+                final TextView text2 = (TextView) mview.findViewById(R.id.addDialogProfileDailyTarget);
+                text2.setText(map.get("TotalTarget"));
+                profileOld.setProfileName(map.get("ProfileName"));
+                profileOld.setTotalDailyTarget(Integer.parseInt(map.get("TotalTarget")));
+                builder.setTitle("Update Profile");
                 builder.setPositiveButton("OK",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog,
                                                 int which) {
-                                FluidTrackerModel fluidNew = new FluidTrackerModel();
-                                TextView text1 = (TextView) mview.findViewById(R.id.fluidName);
-                                fluidNew.setFluidName(text1.getText().toString());
-                                TextView text2= (TextView) mview.findViewById(R.id.fluiddailytarget);
-                                fluidNew.setTarget(Integer.parseInt(text2.getText().toString()));
-                                dbManager.updateManageFluidsDBEntry(fluidOld,fluidNew);
-                                MainActivity.loadFluids(dbManager);
+                                ProfileModel profileNew = new ProfileModel();
+                                profileNew.setProfileName(text1.getText().toString());
+                                profileNew.setTotalDailyTarget(Integer.parseInt(text2.getText().toString()));
+                                dbManager.updateUserProfileDBEntry(profileOld,profileNew);
+                                MainActivity.loadProfiles(dbManager);
                                 loadDataSet();
-                                ListViewAdapter.notifyDataSetChanged();
+                                ManageProfileAdapter.notifyDataSetChanged();
                                 Toast.makeText(getApplicationContext(),"Updated successfully", Toast.LENGTH_LONG).show();
                             }
                         });
@@ -165,7 +159,6 @@ public static ManageFluidsDBManager dbManager;
 
 
     }
-
 
 
 }

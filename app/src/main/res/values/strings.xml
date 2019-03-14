@@ -2,8 +2,8 @@
     <string name="app_name">Fluid Intake Tracker</string>
 
     <string-array name="fluid">
-
-    </string-array>
+        </string-array>
+    <string-array name="profiles"></string-array>>
     <string name="button1">AddDrink</string>
     <string name="button2">statistics</string>
     <string name="button3">ManageUsers</string>

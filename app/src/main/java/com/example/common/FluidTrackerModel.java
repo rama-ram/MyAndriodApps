@@ -4,8 +4,28 @@ public class FluidTrackerModel {
     private String fluidName;
     private int target;
     private int intake;
-    private String timeStamp;
+    private String time;
+
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    private String date;
     private String profile;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    private String id;
 
     public String getProfile() {
         return profile;
@@ -31,12 +51,12 @@ public class FluidTrackerModel {
         this.intake = intake;
     }
 
-    public String getTimeStamp() {
-        return timeStamp;
+    public String getTime() {
+        return time;
     }
 
-    public void setTimeStamp(String timeStamp) {
-        this.timeStamp = timeStamp;
+    public void setTime(String time) {
+        this.time = time;
     }
 
     public String getFluidName() {

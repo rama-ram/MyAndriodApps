@@ -1,29 +1,37 @@
 package com.example.myapplication;
 
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
-import com.example.common.DBHelper;
-import com.example.common.DBManager;
-import com.example.common.DBModel;
-import com.example.common.FluidTrackerData;
-import com.example.common.FluidTrackerModel;
 
-import java.text.DateFormat;
+import com.example.dbUtils.ManageFluidsDBManager;
+import com.example.dbUtils.MainActivityDBManager;
+import com.example.dbUtils.UserProfileDBManager;
+import com.example.models.DBModel;
+import com.example.dbUtils.FluidTrackerData;
+import com.example.common.FluidTrackerModel;
+import com.example.common.UserProfileData;
+import com.example.models.ProfileModel;
+
 import java.util.Arrays;
-import java.util.Date;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -33,20 +41,45 @@ import java.util.Set;
 
 
 public class MainActivity extends AppCompatActivity {
+
+
     static Set<String> spinnerValues = new HashSet<>();
+    static Set<String> profileSpinnerValues = new HashSet<>();
+    private int mYear, mMonth, mDay, mHour, mMinute;
 public static Map<String, Map<Integer,Integer>> map = new HashMap<>();
 public static int totalIntake=0;
     public static int totalGoalIntake=0;
-public static  ArrayAdapter<String> spinnetArr;
-    private DBManager dbManager;
-    public void initiateDB(Context context){
-    dbManager =  new DBManager(context);
-        dbManager.open();
+    public static Spinner profileSpinner;
 
-}
-public static void loadFluids(DBManager dbManager){
+public static  ArrayAdapter<String> spinnetArr;
+    public static  ArrayAdapter<String> profileSpinnerArr;
+    public static MainActivityDBManager dbManager;
+
+    public void initiateDB(Context context){
+        dbManager =  new MainActivityDBManager(context);
+        dbManager.open();
+        System.out.println("connection opened");
+    }
+public static void loadProfiles(UserProfileDBManager dbManager){
+    List<ProfileModel> profile = dbManager.getProfileDBEntries("SELECT * FROM " + DBModel.UserProfile.TABLE3_NAME +
+            ";" );
+    UserProfileData.profiles.clear();
+    UserProfileData.profiles.addAll(profile);
+    loadProfileSpinner();
+    }
+    public static void loadProfileSpinner()
+    {
+        profileSpinnerValues.clear();
+        //load Spinner values
+        for (FluidTrackerModel f: FluidTrackerData.fluids)
+            profileSpinnerValues.add(f.getFluidName());
+
+    }
+
+    public static void loadFluids(ManageFluidsDBManager dbManager){
     //set fluids
-    List<FluidTrackerModel> fluids = dbManager.getManageFluidsDBEntries("SELECT * FROM " + DBModel.ManageFluids.TABLE2_NAME);
+    List<FluidTrackerModel> fluids = dbManager.getManageFluidsDBEntries("SELECT * FROM " + DBModel.ManageFluids.TABLE2_NAME +
+            " where " +DBModel.ManageFluids.TABLE2_COLUMN4+" = "+MainActivity.profileSpinner.getSelectedItemId()+";" );
     FluidTrackerData.fluids.clear();
     FluidTrackerData.fluids.addAll(fluids);
     loadSpinnnerValues();
@@ -58,49 +91,190 @@ public static void loadSpinnnerValues()
     for (FluidTrackerModel f: FluidTrackerData.fluids)
         spinnerValues.add(f.getFluidName());
 
-}    @Override
+
+
+}
+@Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        profileSpinner = (Spinner) findViewById(R.id.profileSpinner);
+        profileSpinnerValues.addAll(Arrays.asList(getResources().getStringArray(R.array.profiles)));
+        profileSpinnerArr = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, spinnerValues.toArray(new String[0]));
+        profileSpinnerArr.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        profileSpinner.setAdapter(profileSpinnerArr);
+
+
+
         initiateDB(this);
-
-
-//display date n time in first row
-        String currentDateTimeString = DateFormat.getDateTimeInstance().format(new Date());
-// textView is the TextView view that should display it
-        TextView textView = (TextView)findViewById(R.id.timeText);
-        textView.setText(currentDateTimeString);
-
-        textView = (TextView)findViewById(R.id.dateText);
-        textView.setText(currentDateTimeString);
-
+        Calendar c = Calendar.getInstance();
+        mYear = c.get(Calendar.YEAR);
+        mMonth = c.get(Calendar.MONTH);
+        mDay = c.get(Calendar.DAY_OF_MONTH);
+        mHour = c.get(Calendar.HOUR_OF_DAY);
+        mMinute = c.get(Calendar.MINUTE);
+if (mMinute<10)
+{
+        ((TextView)findViewById(R.id.timeText)).setText(mHour + ":0" + mMinute);}
+else{
+    ((TextView)findViewById(R.id.timeText)).setText(mHour + ":" + mMinute);}
+        ((TextView)findViewById(R.id.dateText)).setText(mDay + "-" + (mMonth+ 1) + "-" + mYear);
         Button track = (Button) findViewById(R.id.trackDrink);
         track.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(
                         MainActivity.this);
-                View mview = getLayoutInflater().inflate(R.layout.track_fluid_dialog,null);
+                final View mview = getLayoutInflater().inflate(R.layout.track_history_edit_dialog, null);
                 builder.setTitle("Track Fluid");
-                Spinner spinner = (Spinner)mview.findViewById(R.id.spinner2);
-        spinnerValues.addAll(Arrays.asList(getResources().getStringArray(R.array.fluid)));
-        spinnetArr =  new ArrayAdapter<>(MainActivity.this,android.R.layout.simple_spinner_item,spinnerValues.toArray(new String[0]));
-        spinnetArr.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                final Spinner spinner = (Spinner) mview.findViewById(R.id.spinner2);
+                spinnerValues.addAll(Arrays.asList(getResources().getStringArray(R.array.fluid)));
+                spinnetArr = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, spinnerValues.toArray(new String[0]));
+                spinnetArr.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                 spinner.setAdapter(spinnetArr);
-                builder.setPositiveButton("OK",
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog,
-                                                int which) {
 
-                                Toast.makeText(getApplicationContext(),"Added successfully", Toast.LENGTH_LONG).show();
-                                dialog.dismiss();
+                final Button btnDatePicker = (Button) mview.findViewById(R.id.selectdate);
+
+                btnDatePicker.setText(mDay + "-" + (mMonth+ 1) + "-" + mYear);
+                final Button  btnTimePicker = (Button) mview.findViewById(R.id.selecttime);
+
+
+                if(mMinute<10){
+                    btnTimePicker.setText(mHour + ":0" + mMinute);
+                }
+                else{btnTimePicker.setText(mHour + ":" + mMinute);}
+
+                btnDatePicker.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                            if (v == btnDatePicker) {
+
+                                // Get Current Date
+                                final Calendar c = Calendar.getInstance();
+                                mYear = c.get(Calendar.YEAR);
+                                mMonth = c.get(Calendar.MONTH);
+                                mDay = c.get(Calendar.DAY_OF_MONTH);
+
+
+                                DatePickerDialog datePickerDialog = new DatePickerDialog(MainActivity.this,
+                                        new DatePickerDialog.OnDateSetListener() {
+
+                                            @Override
+                                            public void onDateSet(DatePicker view, int year,
+                                                                  int monthOfYear, int dayOfMonth) {
+
+                                                btnDatePicker.setText(dayOfMonth + "-" + (monthOfYear + 1) + "-" + year);
+
+                                            }
+                                        }, mYear, mMonth, mDay);
+                                datePickerDialog.show();
                             }
-                        });
+                            if (v == btnTimePicker) {
+
+                                // Get Current Time
+                                final Calendar c = Calendar.getInstance();
+                                mHour = c.get(Calendar.HOUR_OF_DAY);
+                                mMinute = c.get(Calendar.MINUTE);
+
+                                // Launch Time Picker Dialog
+                                TimePickerDialog timePickerDialog = new TimePickerDialog(MainActivity.this,
+                                        new TimePickerDialog.OnTimeSetListener() {
+
+                                            @Override
+                                            public void onTimeSet(TimePicker view, int hourOfDay,
+                                                                  int minute) {
+                                                if(mMinute<10){
+                                                    btnTimePicker.setText(hourOfDay + ":0" + minute);
+                                                }
+                                                else{btnTimePicker.setText(hourOfDay + ":" + minute);}
+                                            }
+                                        }, mHour, mMinute, false);
+                                timePickerDialog.show();
+                            }
+                        }
+
+                    }
+                );
+                btnTimePicker.setOnClickListener(new View.OnClickListener() {
+                                                     @Override
+                                                     public void onClick(View v) {
+                                                         if (v == btnDatePicker) {
+
+                                                             // Get Current Date
+                                                             final Calendar c = Calendar.getInstance();
+                                                             mYear = c.get(Calendar.YEAR);
+                                                             mMonth = c.get(Calendar.MONTH);
+                                                             mDay = c.get(Calendar.DAY_OF_MONTH);
+
+
+                                                             DatePickerDialog datePickerDialog = new DatePickerDialog(MainActivity.this,
+                                                                     new DatePickerDialog.OnDateSetListener() {
+
+                                                                         @Override
+                                                                         public void onDateSet(DatePicker view, int year,
+                                                                                               int monthOfYear, int dayOfMonth) {
+
+                                                                             btnDatePicker.setText(dayOfMonth + "-" + (monthOfYear + 1) + "-" + year);
+
+                                                                         }
+                                                                     }, mYear, mMonth, mDay);
+                                                             datePickerDialog.show();
+                                                         }
+                                                         if (v == btnTimePicker) {
+
+                                                             // Get Current Time
+                                                             final Calendar c = Calendar.getInstance();
+                                                             mHour = c.get(Calendar.HOUR_OF_DAY);
+                                                             mMinute = c.get(Calendar.MINUTE);
+
+                                                             // Launch Time Picker Dialog
+                                                             TimePickerDialog timePickerDialog = new TimePickerDialog(MainActivity.this,
+                                                                     new TimePickerDialog.OnTimeSetListener() {
+
+                                                                         @Override
+                                                                         public void onTimeSet(TimePicker view, int hourOfDay,
+                                                                                               int minute) {
+                                                                                if(mMinute<10){
+                                                                                    btnTimePicker.setText(hourOfDay + ":0" + minute);
+                                                                                }
+                                                                             else{btnTimePicker.setText(hourOfDay + ":" + minute);}
+                                                                         }
+                                                                     }, mHour, mMinute, false);
+                                                             timePickerDialog.show();
+                                                         }
+                                                     }
+
+                                                 }
+                );
+
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (TextUtils.isEmpty(((EditText) mview.findViewById(R.id.dailyAmount)).getText().toString())) {
+                            Toast.makeText(getApplicationContext(), "Please add the drink and intake", Toast.LENGTH_LONG).show();
+                        }
+                        else{
+                        FluidTrackerModel fluid = new FluidTrackerModel();
+                        fluid.setFluidName(spinner.getSelectedItem().toString());
+                        TextView text2 = (TextView) mview.findViewById(R.id.dailyAmount);
+                        int num = Integer.parseInt(text2.getText().toString());
+                        fluid.setIntake(num);
+                        fluid.setDate(btnDatePicker.getText().toString());
+                        fluid.setTime(btnTimePicker.getText().toString());
+                            DrinkHistory.dbManager.insertFluidsLogDBEntry(fluid);
+                        //load the progress bar based on this change
+
+
+                        Toast.makeText(getApplicationContext(), "Added successfully", Toast.LENGTH_LONG).show();
+                        dialog.dismiss();
+                        //add values to DB
+                    }}
+                });
                 builder.setNegativeButton("Cancel",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog,
                                                 int which) {
-                                Toast.makeText(getApplicationContext(),"Nothing Added!",Toast.LENGTH_LONG).show();
+                                Toast.makeText(getApplicationContext(), "Nothing Added!", Toast.LENGTH_LONG).show();
                                 dialog.dismiss();
                             }
                         });
@@ -111,15 +285,35 @@ public static void loadSpinnnerValues()
             }
         });
 
-        Button history = (Button) findViewById(R.id.ManageFluids);
+        Button history = (Button) findViewById(R.id.drinkHistory);
         history.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent (MainActivity.this,ManageFluid.class));
+                startActivity(new Intent(MainActivity.this, DrinkHistory.class));
 
             }
         });
-        loadFluids(dbManager);
+        Button manageFluids = (Button) findViewById(R.id.ManageFluids);
+        manageFluids.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, ManageFluid.class));
+
+            }
+        });
+
+        Button manageProfile = (Button) findViewById(R.id.manageProfile);
+        history.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, ManageProfile.class));
+
+            }
+        });
+
+        loadFluids(ManageFluid.dbManager);
+    }
+
 
 //Button history = (Button) findViewById(R.id.History);
 //        history.setOnClickListener(new View.OnClickListener() {
@@ -139,11 +333,11 @@ public static void loadSpinnnerValues()
 //            }
 //        });
 //displayGoals();
-    }
+
     private void showTrackFluidDialog() {//custom dialog with spinner
                 AlertDialog.Builder builder = new AlertDialog.Builder(
                         MainActivity.this);
-                View mview = getLayoutInflater().inflate(R.layout.add_fluid_dialog,null);
+                View mview = getLayoutInflater().inflate(R.layout.manage_fluid_add_fluid_dialog,null);
                 builder.setTitle("Track Fluid");
                 Spinner spinner = (Spinner)mview.findViewById(R.id.spinner2);
 
