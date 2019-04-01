@@ -71,8 +71,8 @@ public static void loadProfiles(UserProfileDBManager dbManager){
     {
         profileSpinnerValues.clear();
         //load Spinner values
-        for (FluidTrackerModel f: FluidTrackerData.fluids)
-            profileSpinnerValues.add(f.getFluidName());
+        for (ProfileModel f: UserProfileData.profiles)
+            profileSpinnerValues.add(f.getProfileName());
 
     }
 
@@ -303,15 +303,21 @@ else{
         });
 
         Button manageProfile = (Button) findViewById(R.id.manageProfile);
-        history.setOnClickListener(new View.OnClickListener() {
+    manageProfile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(MainActivity.this, ManageProfile.class));
 
             }
         });
-
+    ManageFluid.initiateDB(this);
         loadFluids(ManageFluid.dbManager);
+    //load the profile here..........ManageFluid.initiateDB(this);
+    ManageProfile.initiateDB(this);
+    loadProfiles(ManageProfile.dbManager);
+    profileSpinnerArr = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, spinnerValues.toArray(new String[0]));
+    profileSpinner.setAdapter(profileSpinnerArr);
+
     }
 
 

@@ -36,7 +36,7 @@ public static ManageFluidsDBManager dbManager;
     static public ArrayList<HashMap<String, String>> list = new ArrayList<>();
     ListViewAdapter ListViewAdapter;
 
-    public void initiateDB(Context context){
+    public static void initiateDB(Context context){
         dbManager =  new ManageFluidsDBManager(context);
         dbManager.open();
         System.out.println("connection opened");

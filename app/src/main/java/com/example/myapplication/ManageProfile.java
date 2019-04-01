@@ -32,7 +32,7 @@ public class ManageProfile extends AppCompatActivity {
     static public ArrayList<HashMap<String, String>> list = new ArrayList<>();
     com.example.common.ManageProfileAdapter ManageProfileAdapter;
 
-    public void initiateDB(Context context){
+    public static void initiateDB(Context context){
         dbManager =  new UserProfileDBManager(context);
         dbManager.open();
         System.out.println("connection opened");
@@ -60,15 +60,15 @@ public class ManageProfile extends AppCompatActivity {
                                          public void onClick(View v) {
 
                                              AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(ManageProfile.this);
-                                             final View view = getLayoutInflater().inflate(R.layout.manage_fluid_add_fluid_dialog, null);
+                                             final View view = getLayoutInflater().inflate(R.layout.manage_profile_add_profile_dialog, null);
                                              dialogBuilder.setTitle("Add Profile");
                                              dialogBuilder.setPositiveButton("Add", new DialogInterface.OnClickListener() {
                                                  @Override
                                                  public void onClick(DialogInterface dialog, int which) {
                                                      ProfileModel profile= new ProfileModel();
-                                                     TextView text1 = (TextView) view.findViewById(R.id.profileName);
+                                                     TextView text1 = (TextView) view.findViewById(R.id.addDialogProfileName);
                                                      profile.setProfileName(text1.getText().toString());
-                                                     TextView text2= (TextView) view.findViewById(R.id.profileDailyTarget);
+                                                     TextView text2= (TextView) view.findViewById(R.id.addDialogProfileDailyTarget);
                                                      int num = Integer.parseInt(text2.getText().toString());
                                                      profile.setTotalDailyTarget(num);
                                                      dbManager.insertProfileEntry(profile);

@@ -9,7 +9,7 @@ import com.example.models.DBModel;
 
 public class DBHelper extends SQLiteOpenHelper {
     // If you change the database schema, you must increment the database version.
-    private SQLiteDatabase db;
+    public SQLiteDatabase db;
         public static final int DATABASE_VERSION = 1;
         public static final String DATABASE_NAME = "FluidTracker.db";
 
